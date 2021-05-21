@@ -44,9 +44,12 @@ func Start() {
 	var port int
 
 	flag.StringVar(&target, "r", "", "the remote server (<host>:<port>)")
-	flag.IntVar(&port, "p", 2222, "the proxy port")
+	flag.IntVar(&port, "p", -1, "the proxy port")
 	flag.Parse()
-
+	if target == "" || port < 0 {
+		flag.Usage()
+		return
+	}
 	println(strings.Join(os.Args, " | "))
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", port))
 	logErr(err)

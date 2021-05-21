@@ -3,16 +3,20 @@ package main
 import (
 	"flag"
 	"fmt"
+	"sucicada/process"
 )
 
 func main() {
 	port := flag.Int("p", -1, "port")
+	isKill := flag.Bool("k", false, "is kill")
 	flag.Parse()
 	if *port <= 0 {
 		flag.Usage()
 		return
 	}
-	fmt.Println(*port)
-	//pid := process.FindPortPid(port)
-	//process.KillPid(pid)
+	pid := process.FindPortPid(*port)
+	fmt.Println("pid", pid)
+	if *isKill {
+		process.KillPid(pid)
+	}
 }
