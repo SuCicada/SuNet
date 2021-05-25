@@ -1,4 +1,5 @@
 #!/bin/bash
+# https://www.cnblogs.com/cangqinglang/p/12101493.html
 
 os_all='linux windows darwin freebsd'
 arch_all='386 amd64 arm arm64 mips64 mips64le mips mipsle'
@@ -36,8 +37,9 @@ for src in $go_src; do
           exe=".exe"
         fi
         file=$bin_dir/$src/$src-$os-$arch$exe
+        srcfile=cmd/${src}.go
         echo build $src with $os-$arch in $file
-        CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o $file ${src}.go
+        CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o $file $srcfile
         echo "" >&9
       } &
     done

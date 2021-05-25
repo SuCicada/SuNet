@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"sucicada/process"
 )
 
@@ -18,5 +19,6 @@ func main() {
 	fmt.Println("pid", pid)
 	if *isKill {
 		process.KillPid(pid)
+		log.Println("kill", pid)
 	}
 }

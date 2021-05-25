@@ -1,5 +1,9 @@
 // +build windows
 
+/*
+	杀死 windows 下占用端口的可恶进程
+*/
+
 package process
 
 import (

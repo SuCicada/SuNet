@@ -1,3 +1,17 @@
+/*
+本机端口转发到远端端口，
+监听本机端口的连接，当请求来临时，建立与远端端口的连接，进行双向数据代理耍传输
+
+remote: listen: 22
+start app ...
+local: listen: 2222
+client: conn local:2222
+app:
+	1. conn remote:22
+	2. receive from 2222 from client -> send to remote:22
+	3. client <- response remote:22
+*/
+
 package port_forward
 
 import (
@@ -67,6 +81,7 @@ func Start() {
 
 		// 接收到的客户端的连接
 		go handleTCPConn(conn)
+		fmt.Println(conn)
 	}
 }
 
