@@ -1,7 +1,7 @@
 #!/bin/bash
 # https://www.cnblogs.com/cangqinglang/p/12101493.html
 
-os_all='linux windows darwin freebsd'
+os_all='aix darwin dragonfly freebsd linux netbsd openbsd solaris windows'
 arch_all='386 amd64 arm arm64 mips64 mips64le mips mipsle'
 
 bin_dir=$(dirname $0)/bin

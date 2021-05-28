@@ -1,25 +1,31 @@
 package main
 
 import (
-	"flag"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
 )
+
+type event struct {
+	signal int16
+	value  []byte
+}
 
 func main() {
 
-	//confFile := `find ../../zyf-jeecg-boot/ -type f -iname "*config*" -o -iname "web.xml" -o -iname "*database*" -o -iname "*pass*" 2>/dev/null`
-	//result := GetCmdNews(confFile)
-	//fmt.Println(result)
-	os.Args = strings.Split(". -r ubuntu.wsl2:22", " ")
-	target := flag.String("r", "??", "the remote server (<host>:<port>)")
-	b := func() *string {
-		a := new(string)
-		*a = "243242"
-		return a
+	data := make([]byte, 2) // unsafe.Sizeof(uint16(1))
+	binary.BigEndian.PutUint16(data, uint16(123))
+	a := &event{
+		signal: 771,
+		value:  data,
 	}
+	fmt.Println(a)
+	res, _ := json.Marshal(a)
+	fmt.Println(res)
 
-	flag.Parse()
-	fmt.Println(target)
+	e := &event{}
+	json.Unmarshal(res, e)
+
+	fmt.Println(*e)
+
 }

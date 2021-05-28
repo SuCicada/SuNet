@@ -86,7 +86,10 @@ func Start() {
 }
 
 func handleTCPConn(conn *net.TCPConn) {
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		fmt.Println("conn close", conn)
+	}()
 	log.Printf("Client '%v' connected!\n", conn.RemoteAddr())
 
 	conn.SetKeepAlive(true)
@@ -99,7 +102,11 @@ func handleTCPConn(conn *net.TCPConn) {
 		return
 	}
 
-	defer client.Close()
+	defer func() {
+		client.Close()
+		fmt.Println("client close", client)
+	}()
+
 	log.Printf("Connection to server '%v' established!\n", client.RemoteAddr())
 
 	client.SetKeepAlive(true)
@@ -109,15 +116,16 @@ func handleTCPConn(conn *net.TCPConn) {
 
 	go func() {
 		io.Copy(client, conn)
-		println("1")
+		println("client   <- conn")
 		stop <- true
 	}()
 
 	go func() {
 		io.Copy(conn, client)
-		println("2")
+		println("conn  <-  client")
 		stop <- true
 	}()
 
 	<-stop
+	fmt.Println("stop")
 }
