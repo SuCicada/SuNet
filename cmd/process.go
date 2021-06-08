@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/SuCicada/SuNet/process"
 	"log"
-	"sucicada/process"
 )
 
 func main() {

@@ -52,38 +52,52 @@ func NewTrans(clientConn *net.TCPConn) {
 		clientConn.Close()
 	}()
 	clientConn.SetKeepAlive(true)
-	clientConn.SetKeepAlivePeriod(time.Second * 5)
+	clientConn.SetKeepAlivePeriod(time.Second * 3)
 	data := make([]byte, 2)
 	clientConn.Read(data)
 	//clientConn.SetReadDeadline(time.Now().Add(time.Second * 6))
 	transPort := int(binary.BigEndian.Uint16(data))
 	transAddr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", transPort))
+	// 监听本地的代理端口
 	transListener, _ := net.ListenTCP("tcp", transAddr)
-	clientConn.Write([]byte{YES})
+	_, err := clientConn.Write([]byte{YES})
+	if err != nil {
+		log.Println(err.Error())
+	}
 	log.Println("transListener ", transAddr)
 
 	for {
 		//transListener.SetDeadline(time.Now().Add(time.Second * 10))
 		go func() {
-			if _, err := clientConn.Read([]byte{}); err != nil {
-				log.Println(err.Error())
+			time.Sleep(time.Second * 1)
+			d := make([]byte, 1)
+			for {
+				if _, err := clientConn.Read(d); err != nil {
+					log.Println(err.Error())
+					break
+				}
+				//fmt.Println("d", d)
 			}
 			if err := transListener.Close(); err != nil {
 				log.Println(err.Error())
 			}
+			log.Println("transListener.Close()", transListener)
 		}()
+		// 客户端的连接
 		transConn, err := transListener.AcceptTCP()
 		if err != nil {
 			log.Println(err.Error())
 			break
 		}
+
+		// 给内网连接发送信号
 		clientConn.Write([]byte{NEW})
 		log.Println("clientConn.Write([]byte{NEW})")
+		// 接入来自内网的连接
 		transClientConn, err := transListener.AcceptTCP()
 		if err != nil {
 			log.Println(err)
 		}
-
 		go newTransConn(transClientConn, transConn,
 			func() {
 			})
@@ -91,8 +105,8 @@ func NewTrans(clientConn *net.TCPConn) {
 }
 
 /*
-transConn 是新的 client 请求
 clientConn 是内网穿透连接
+transConn 是新的 client 请求
 */
 func newTransConn(clientConn *net.TCPConn, transConn *net.TCPConn, ready func()) {
 	log.Println("newTransConn", transConn.RemoteAddr())
@@ -165,14 +179,30 @@ func Client(remoteIp string, remotePort int, localPort int, remoteTransPort int)
 	//connEventByte, _ := json.Marshal(connEvent)
 	remoteClient.Write(data)
 	data = make([]byte, 1)
+
+	// 等待 YES 验证
 	remoteClient.Read(data)
 	log.Println("data", data)
+
 	if data[0] == YES {
-		for {
-			if _, err := remoteClient.Read(data); err != nil {
-				log.Println(err.Error())
+		go func() {
+			for {
+				time.Sleep(time.Second * 1)
+				_, err := remoteClient.Write([]byte{0x00})
+				if err != nil {
+					log.Println(err.Error())
+					return
+				} else {
+					log.Println("heart")
+				}
 			}
-			log.Println("2data", data)
+		}()
+		for {
+			// 等待 NEW 新连接
+			if _, err := remoteClient.Read(data); err != nil {
+				//log.Println(err.Error())
+			}
+			//log.Println("2data", data)
 			if data[0] == NEW {
 				go func() {
 					remoteTransAddr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", remoteIp, remoteTransPort))

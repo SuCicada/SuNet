@@ -1,11 +1,17 @@
 #!/bin/bash
 # https://www.cnblogs.com/cangqinglang/p/12101493.html
 
-os_all='aix darwin dragonfly freebsd linux netbsd openbsd solaris windows'
-arch_all='386 amd64 arm arm64 mips64 mips64le mips mipsle'
+#os_all='aix darwin dragonfly freebsd linux netbsd openbsd solaris windows'
+os_all='linux windows'
+#arch_all='386 amd64 arm arm64 mips64 mips64le mips mipsle'
+arch_all='amd64'
 
 bin_dir=$(dirname $0)/bin
-go_src="port_forward process"
+go_src='
+  port_forward
+  process
+  transponder
+'
 
 if [ ! -f $bin_dir ]; then
   mkdir -p $bin_dir
@@ -13,7 +19,7 @@ if [ ! -f $bin_dir ]; then
 fi
 
 #并发数
-threadTask=100
+threadTask=20
 #创建fifo管道
 fifoFile="/tmp/test_fifo"
 rm ${fifoFile}
@@ -40,6 +46,7 @@ for src in $go_src; do
         srcfile=cmd/${src}.go
         echo build $src with $os-$arch in $file
         CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o $file $srcfile
+        chmod +x $srcfile
         echo "" >&9
       } &
     done

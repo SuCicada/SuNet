@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sucicada/port_forward"
+	"github.com/SuCicada/SuNet/port_forward"
 )
 
 func main() {
