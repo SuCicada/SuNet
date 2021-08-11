@@ -1,13 +1,13 @@
-## 猎人系统
+## 猎人系统 in Linux
 - todo:
   - [x] 端口转发 (port_forward)
   - [x] 内网穿透 (transponder)
   - [x] 端口占用杀死 in windows (process)
   - [ ] 远程调用 完美的 bash 终端
   - [ ] 中央管理系统
+  - [ ] 死亡复活机制
   - [ ] 自动更新
   - [ ] 进程信息, 行为混淆
-  - [ ]
  
 https://spectacled-wound-19b.notion.site/go-Linux-cc27004988c7475b829118489276d12e
 
