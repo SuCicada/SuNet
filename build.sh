@@ -6,12 +6,12 @@ os_all='linux windows'
 #arch_all='386 amd64 arm arm64 mips64 mips64le mips mipsle'
 arch_all='amd64'
 
-bin_dir=$(dirname $0)/bin
 go_src='
-  port_forward
+  port-forward
   process
   transponder
 '
+bin_dir=$(dirname "$0")/bin
 
 if [ ! -f $bin_dir ]; then
   mkdir -p $bin_dir
