@@ -26,9 +26,6 @@ type Addr struct {
 var addrChan chan Addr
 var wg sync.WaitGroup
 
-//地址管道,100容量
-var addressChan = make(chan string, 100)
-
 //线程池大小
 var pool_size = 70000
 var pool = gohive.NewFixedSizePool(pool_size)
