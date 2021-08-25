@@ -20,3 +20,10 @@
     - 加锁注意
     - 区分 windows, linux, wsl
     
+
+
+
+遇到了
+- bind: An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full.
+0
+    端口打满了

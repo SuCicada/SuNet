@@ -2,21 +2,38 @@ package main
 
 import (
 	"fmt"
-	"html"
-	"log"
-	"net/http"
+	"strconv"
+	"sync"
 )
 
-func main2() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
-	http.HandleFunc("/list",
-		func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println(r)
-			fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-		})
-	err := http.ListenAndServe(":414",nil)
-	if err != nil {
-		log.Panicln(err.Error())
+var res chan string
+
+var swg sync.WaitGroup
+
+func main1() {
+	res = make(chan string, 10)
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+		go fun(i)
 	}
-	fmt.Println("ok")
+	wg.Wait()
+	fmt.Println("close")
+	close(res)
+	for r := range res {
+		fmt.Println(r)
+	}
+	//for {
+	//	if r, ok := <-res; ok {
+	//		fmt.Println(r)
+	//	} else {
+	//		break
+	//	}
+	//}
+}
+
+func fun(a int) {
+	defer wg.Done()
+	for i := 0; i < 3; i++ {
+		res <- strconv.Itoa(i) + " " + strconv.Itoa(a)
+	}
 }
