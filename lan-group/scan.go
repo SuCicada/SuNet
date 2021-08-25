@@ -1,10 +1,12 @@
 // https://cloud.tencent.com/developer/article/1075942
+// https://developer.51cto.com/art/202101/639962.htm
 package main
 
 import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/loveleshsharma/gohive"
 	"io/ioutil"
 	"log"
 	"net"
@@ -24,8 +26,17 @@ type Addr struct {
 var addrChan chan Addr
 var wg sync.WaitGroup
 
+//地址管道,100容量
+var addressChan = make(chan string, 100)
+
+//线程池大小
+var pool_size = 70000
+var pool = gohive.NewFixedSizePool(pool_size)
+
 func HttpClient(isWrite bool) {
 	SelfInfo()
+	var begin = time.Now()
+
 	// 不设置多一些的缓冲区就会报错
 	addrChan = make(chan Addr, 100)
 	addrs, err := net.InterfaceAddrs()
@@ -34,8 +45,8 @@ func HttpClient(isWrite bool) {
 	}
 	for _, a := range addrs {
 		wg.Add(1)
-		ScanAddress(a)
-		wg.Wait()
+		go ScanAddress(a)
+		//wg.Wait()
 	}
 	wg.Wait()
 	close(addrChan)
@@ -47,6 +58,8 @@ func HttpClient(isWrite bool) {
 		}
 		WriteHosts(newAddrs)
 	}
+	var elapseTime = time.Now().Sub(begin)
+	fmt.Println("耗时:", elapseTime)
 }
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
@@ -85,13 +98,17 @@ func WriteHosts(newAddrs []Addr) {
 		}
 	}
 }
+
 func ScanAddress(a net.Addr) {
 	if ipNet, ok := a.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
 		if ipNet.IP.To4() != nil {
 			//&& ipNet.IP.String()=="172.27.112.1"
 			for _, ipInt := range getTable(ipNet) {
 				wg.Add(1)
-				go request(ipInt)
+				pool.Submit(func() {
+					request(ipInt)
+				})
+
 			}
 		}
 	}
@@ -108,21 +125,20 @@ var HTTPTransport = &http.Transport{
 	ExpectContinueTimeout: 30 * time.Second, // 等待服务第一个响应的超时时间
 	MaxIdleConnsPerHost:   100,              // 每个host保持的空闲连接数
 }
+var client = http.Client{
+	Transport: HTTPTransport,
+	Timeout:   5 * time.Second,
+}
 
 func request(ipNet net.IP) {
 	url := fmt.Sprintf("http://%s:%d/list", ipNet, port)
-	client := http.Client{
-		Transport: HTTPTransport,
-		Timeout:   5 * time.Second,
-	}
 	resp, err := client.Post(url, "text/plain",
 		strings.NewReader("PLZ"))
-	if ipNet.String() == "172.27.127.150" {
+	if ipNet.String() == "172.17.250.170" {
 		fmt.Println("---------------------")
 		fmt.Println(url)
 		fmt.Println(resp)
 		fmt.Println(err)
-
 	}
 	if err == nil {
 		body, _ := ioutil.ReadAll(resp.Body)
