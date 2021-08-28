@@ -16,9 +16,13 @@ var PLZ = []byte("PLZ")
 func main() {
 	writeFlag := flag.Bool("w", false, "write hosts file ?")
 	serverFlag := flag.Bool("s", false, "open the listening server ?")
-	flag.IntVar(&port, "s", 4140, "open the listening server ?")
-	flag.StringVar(&selfHost, "h", "", "open the listening server ?")
+	flag.IntVar(&port, "p", 4140, "port")
+	flag.StringVar(&selfHost, "h", "", "self host name ")
 	flag.Parse()
+	if selfHost == "" {
+		flag.Usage()
+		return
+	}
 	SelfInfo()
 	if *serverFlag {
 		HttpServer(port)
