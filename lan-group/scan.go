@@ -4,14 +4,12 @@ package main
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"github.com/loveleshsharma/gohive"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -48,7 +46,7 @@ func HttpClient(isWrite bool) {
 	wg.Wait()
 	close(addrChan)
 	newAddrs := make([]Addr, len(addrChan))
-	fmt.Println(len(addrChan))
+	fmt.Println("len(addrChan)", len(addrChan))
 	if isWrite {
 		for arr := range addrChan {
 			newAddrs = append(newAddrs, arr)
@@ -57,43 +55,6 @@ func HttpClient(isWrite bool) {
 	}
 	var elapseTime = time.Now().Sub(begin)
 	fmt.Println("耗时:", elapseTime)
-}
-func FileExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil || os.IsExist(err) {
-		return true
-	}
-	return false
-}
-
-type HostsItem struct {
-	HostsName string
-	Content   string
-	Toggle    bool
-}
-
-func WriteHosts(newAddrs []Addr) {
-	// 目前的设定是, 只运行于 linux 或 WSL 中
-	hostsArr := []string{
-		"/etc/hosts", // linux
-		"/mnt/c/Windows/System32/drivers/etc/hosts", // windows-hosts in wsl
-	}
-	for _, hostFile := range hostsArr {
-		if FileExists(hostFile) {
-			hosts, err := ioutil.ReadFile(hostFile)
-			if err != nil {
-				log.Println(err.Error())
-			}
-			var items []HostsItem
-			json.Unmarshal(hosts, &items)
-			//items
-			//if b, err := json.Marshal(hItems); err != nil {
-			//	log.Println(err.Error())
-			//} else if err := ioutil.WriteFile(path, b, os.ModePerm); err != nil {
-			//	log.Println(err.Error())
-			//}
-		}
-	}
 }
 
 func ScanAddress(a net.Addr) {

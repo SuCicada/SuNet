@@ -3,5 +3,8 @@ package main
 import "testing"
 
 func TestScan(t *testing.T) {
-	HttpClient()
+
+}
+func TestWriteHosts(t *testing.T) {
+	WriteHosts(nil)
 }
