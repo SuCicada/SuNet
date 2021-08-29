@@ -1,4 +1,4 @@
-package main
+package lan_group
 
 import (
 	"flag"
@@ -13,7 +13,7 @@ func getSelfHost() string {
 
 var PLZ = []byte("PLZ")
 
-func main() {
+func Main() {
 	writeFlag := flag.Bool("w", false, "write hosts file ?")
 	serverFlag := flag.Bool("s", false, "open the listening server ?")
 	flag.IntVar(&port, "p", 4140, "port")

@@ -6,7 +6,7 @@ LDFLAGS := -s -w
 all: fmt build
 
 build:
-	./build.sh
+	bash ./build.sh
 
 fmt:
 	@sh -c "go fmt ./..."

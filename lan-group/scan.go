@@ -1,6 +1,6 @@
 // https://cloud.tencent.com/developer/article/1075942
 // https://developer.51cto.com/art/202101/639962.htm
-package main
+package lan_group
 
 import (
 	"encoding/binary"

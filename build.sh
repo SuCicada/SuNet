@@ -8,6 +8,7 @@ arch_all='amd64'
 
 go_src='
   port-forward
+  lan-group
   process
   transponder
 '
