@@ -6,10 +6,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/loveleshsharma/gohive"
+	"github.com/schollz/progressbar/v3"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -29,7 +31,6 @@ var pool_size = 70000
 var pool = gohive.NewFixedSizePool(pool_size)
 
 func HttpClient(isWrite bool) {
-	SelfInfo()
 	var begin = time.Now()
 
 	// 不设置多一些的缓冲区就会报错
@@ -38,16 +39,41 @@ func HttpClient(isWrite bool) {
 	if err != nil {
 		log.Fatal("无法获取本地网络信息:", err)
 	}
+	var needScanNet []net.IP
 	for _, a := range addrs {
-		wg.Add(1)
-		go ScanAddress(a)
+		needScanNet = append(needScanNet, ScanAddress(a)...)
+		//go
 		//wg.Wait()
+	}
+	fmt.Println("needScanNet: ", len(needScanNet))
+	//bar :=progressbar.Default(int64(len(needScanNet)))
+	bar := progressbar.NewOptions(
+		len(needScanNet),
+		progressbar.OptionUseANSICodes(true),
+		progressbar.OptionSetDescription("scan..."),
+		progressbar.OptionSetWriter(os.Stderr),
+		progressbar.OptionSetWidth(10),
+		progressbar.OptionThrottle(65*time.Millisecond),
+		progressbar.OptionShowCount(),
+		progressbar.OptionShowIts(),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Fprint(os.Stderr, "\n")
+		}),
+		progressbar.OptionSpinnerType(14),
+		progressbar.OptionFullWidth(),
+	)
+	for _, ip := range needScanNet {
+		wg.Add(1)
+		pool.Submit(func() {
+			request(ip)
+			bar.Add(1)
+		})
 	}
 	wg.Wait()
 	close(addrChan)
-	newAddrs := make([]Addr, len(addrChan))
 	fmt.Println("len(addrChan)", len(addrChan))
 	if isWrite {
+		var newAddrs []Addr
 		for arr := range addrChan {
 			newAddrs = append(newAddrs, arr)
 		}
@@ -57,20 +83,19 @@ func HttpClient(isWrite bool) {
 	fmt.Println("耗时:", elapseTime)
 }
 
-func ScanAddress(a net.Addr) {
+func ScanAddress(a net.Addr) []net.IP {
+	var needScanNet []net.IP
 	if ipNet, ok := a.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
 		if ipNet.IP.To4() != nil {
 			//&& ipNet.IP.String()=="172.27.112.1"
-			for _, ipInt := range getTable(ipNet) {
-				wg.Add(1)
-				pool.Submit(func() {
-					request(ipInt)
-				})
-
-			}
+			needScanNet = append(needScanNet, getTable(ipNet)...)
+			//wg.Add(1)
+			//pool.Submit(func() {
+			//})
 		}
 	}
-	defer wg.Done()
+	//defer wg.Done()
+	return needScanNet
 }
 
 var HTTPTransport = &http.Transport{
@@ -92,18 +117,12 @@ func request(ipNet net.IP) {
 	url := fmt.Sprintf("http://%s:%d/list", ipNet, port)
 	resp, err := client.Post(url, "text/plain",
 		strings.NewReader("PLZ"))
-	if ipNet.String() == "172.17.250.170" {
-		fmt.Println("---------------------")
-		fmt.Println(url)
-		fmt.Println(resp)
-		fmt.Println(err)
-	}
 	if err == nil {
 		body, _ := ioutil.ReadAll(resp.Body)
 		res := string(body)
 		arr := strings.Split(res, ":")
 		if arr[0] == "OK" {
-			log.Println(ipNet, arr[1])
+			log.Println("見つけた", ipNet, arr[1])
 			addrChan <- Addr{ipNet, arr[1]}
 		}
 	}

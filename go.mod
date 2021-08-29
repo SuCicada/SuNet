@@ -6,6 +6,7 @@ require (
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
 	github.com/loveleshsharma/gohive v0.0.0-20191008095549-7eec91c92993
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/schollz/progressbar/v3 v3.8.2
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/txn2/txeh v1.3.0
 )

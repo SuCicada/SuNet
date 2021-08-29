@@ -19,12 +19,12 @@ func main() {
 	flag.IntVar(&port, "p", 4140, "port")
 	flag.StringVar(&selfHost, "h", "", "self host name ")
 	flag.Parse()
-	if selfHost == "" {
-		flag.Usage()
-		return
-	}
 	SelfInfo()
 	if *serverFlag {
+		if selfHost == "" {
+			flag.Usage()
+			return
+		}
 		HttpServer(port)
 	} else {
 		HttpClient(*writeFlag)
