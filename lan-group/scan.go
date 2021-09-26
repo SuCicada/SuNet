@@ -27,10 +27,10 @@ var addrChan chan Addr
 var wg sync.WaitGroup
 
 //线程池大小
-var pool_size = 70000
+var pool_size = 50000
 var pool = gohive.NewFixedSizePool(pool_size)
 
-func HttpClient(isWrite bool) {
+func HttpClient(isWrite bool, scanScope string) {
 	var begin = time.Now()
 
 	// 不设置多一些的缓冲区就会报错
@@ -40,10 +40,15 @@ func HttpClient(isWrite bool) {
 		log.Fatal("无法获取本地网络信息:", err)
 	}
 	var needScanNet []net.IP
-	for _, a := range addrs {
-		needScanNet = append(needScanNet, ScanAddress(a)...)
-		//go
-		//wg.Wait()
+	if scanScope == "" {
+		for _, a := range addrs {
+			needScanNet = append(needScanNet, ScanAddress(a)...)
+			//go
+			//wg.Wait()
+		}
+	} else {
+		_, ip, _ := net.ParseCIDR(scanScope)
+		needScanNet = append(needScanNet, getTable(ip)...)
 	}
 	fmt.Println("needScanNet: ", len(needScanNet))
 	//bar :=progressbar.Default(int64(len(needScanNet)))
@@ -106,7 +111,7 @@ var HTTPTransport = &http.Transport{
 	MaxIdleConns:          500,              // 最大空闲连接
 	IdleConnTimeout:       60 * time.Second, // 空闲连接的超时时间
 	ExpectContinueTimeout: 30 * time.Second, // 等待服务第一个响应的超时时间
-	MaxIdleConnsPerHost:   100,              // 每个host保持的空闲连接数
+	//MaxIdle/ConnsPerHost:   100,              // 每个host保持的空闲连接数
 }
 var client = http.Client{
 	Transport: HTTPTransport,
@@ -117,6 +122,13 @@ func request(ipNet net.IP) {
 	url := fmt.Sprintf("http://%s:%d/list", ipNet, port)
 	resp, err := client.Post(url, "text/plain",
 		strings.NewReader("PLZ"))
+	if debugIP != "" && ipNet.String() == debugIP {
+		if err == nil {
+			fmt.Println("no err")
+		} else {
+			fmt.Println(err.Error())
+		}
+	}
 	if err == nil {
 		body, _ := ioutil.ReadAll(resp.Body)
 		res := string(body)
@@ -126,7 +138,12 @@ func request(ipNet net.IP) {
 			addrChan <- Addr{ipNet, arr[1]}
 		}
 	}
-	defer wg.Done()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+		wg.Done()
+	}()
 }
 
 // Table 根据IP和mask换算内网IP范围
